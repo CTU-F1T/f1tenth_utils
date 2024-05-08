@@ -107,7 +107,7 @@ if __name__ == "__main__":
     limit = pyplot.Circle(
         xy = (0, 0),
         radius = (MU * G),  # x**2 + y**2 <= R**2
-        ls = "--", facecolor = 'r', edgecolor = 'k', alpha = 0.1, lw = 2.0
+        ls = "--", facecolor = 'r', edgecolor = 'k', alpha = 0.25, lw = 2.0
     )
     figure.gca().add_patch(limit)
     figure.gca().set_aspect("equal")
