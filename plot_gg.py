@@ -57,7 +57,7 @@ class Updater(Thread):
         """Initialize the node."""
         super(Updater, self).__init__()
 
-        self.n = Node("plot_error")
+        self.n = Node("plot_gg")
 
         self.n.Subscriber(
             "/imu",
