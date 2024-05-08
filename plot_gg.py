@@ -18,8 +18,6 @@ from autopsy.core import Core
 
 from threading import Thread
 
-import numpy
-
 from matplotlib import pyplot
 from matplotlib.animation import FuncAnimation
 
@@ -27,8 +25,8 @@ from matplotlib.animation import FuncAnimation
 from sensor_msgs.msg import Imu
 
 # Global variables
-last_int_x = None
-path_length = 0
+G = 9.81
+MU = 0.25
 
 figure = None
 line = None
@@ -41,8 +39,6 @@ x_data, y_data = [], []
 
 def update_data(data):
     """Obtain data from the topic. Process and store received data."""
-    global last_int_x, path_length
-
     x, y = data.linear_acceleration.x, data.linear_acceleration.y
 
     # To plot, just add the values to the arrays.
@@ -108,6 +104,13 @@ if __name__ == "__main__":
     # Initialize matplotlib
     figure = pyplot.figure()
     line, = pyplot.plot(x_data, y_data, '-')
+    limit = pyplot.Circle(
+        xy = (0, 0),
+        radius = (MU * G)**2,
+        ls = "--", facecolor = 'r', edgecolor = 'k', alpha = 0.1, lw = 2.0
+    )
+    figure.gca().add_patch(limit)
+    figure.gca().set_aspect("equal")
     figure.gca().set_title("g-g diagram")
     figure.gca().set_xlabel("lateral acceleration [m.s^{-2}]")
     figure.gca().set_ylabel("longitudinal acceleration [m.s^{-2}]")
