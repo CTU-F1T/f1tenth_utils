@@ -58,15 +58,8 @@ def update_data(data):
 
         _k = math.tan(tpoint.front_wheel_angle_rad) / L
 
-        _Fz = M * G + 0.5 * RO * A * CL * _v**2
-        _Fy = M * _k * _v**2
-
-        _ax = math.sqrt(
-            _Fz**2 * MU**2 - _Fy**2
-        ) / M
-
-        x_data.append(_Fy / M)
-        y_data.append(_ax)
+        x_data.append(_k * _v**2)
+        y_data.append(tpoint.acceleration_mps2)
 
 
 class Updater(Thread):
