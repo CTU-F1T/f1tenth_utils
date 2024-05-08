@@ -51,8 +51,8 @@ def update_data(data):
 
     for tpoint in data.points:
         _v = math.sqrt(
-            tpoint.longitudinal_velocity_mps**2,
-            tpoint.lateral_velocity_mps**2
+            tpoint.longitudinal_velocity_mps**2
+            + tpoint.lateral_velocity_mps**2
         )
 
         _k = math.tan(tpoint.front_wheel_angle_rad) / L
