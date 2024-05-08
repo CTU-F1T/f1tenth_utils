@@ -106,7 +106,7 @@ if __name__ == "__main__":
     line, = pyplot.plot(x_data, y_data, '-')
     limit = pyplot.Circle(
         xy = (0, 0),
-        radius = (MU * G)**2,
+        radius = (MU * G),  # x**2 + y**2 <= R**2
         ls = "--", facecolor = 'r', edgecolor = 'k', alpha = 0.1, lw = 2.0
     )
     figure.gca().add_patch(limit)
