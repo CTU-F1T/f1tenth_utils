@@ -46,8 +46,8 @@ def update_data(data):
     x, y = data.linear_acceleration.x, data.linear_acceleration.y
 
     # To plot, just add the values to the arrays.
-    x_data.append(x / 9.81)
-    y_data.append(y / 9.81)
+    x_data.append(y)
+    y_data.append(x)
 
 
 class Updater(Thread):
@@ -109,8 +109,8 @@ if __name__ == "__main__":
     figure = pyplot.figure()
     line, = pyplot.plot(x_data, y_data, '-')
     figure.gca().set_title("g-g diagram")
-    figure.gca().set_xlabel("g_x")
-    figure.gca().set_ylabel("g_y")
+    figure.gca().set_xlabel("lateral acceleration [m.s^{-2}]")
+    figure.gca().set_ylabel("longitudinal acceleration [m.s^{-2}]")
 
     animation = FuncAnimation(figure, update, interval=200)
 
