@@ -12,6 +12,8 @@ and motor (via VESC).
 from autopsy.node import Node
 from autopsy.reconfigure import ParameterServer
 
+from enum import Enum
+
 
 # Message types
 try:
@@ -20,6 +22,11 @@ except ImportError:
     from f1tenth_race.msg import drive_values as DriveValues
 
 from std_msgs.msg import Float64
+
+
+class ControlMethod(Enum):
+    SPEED = 0
+    CURRENT = 1
 
 
 # Global variables
@@ -42,9 +49,16 @@ PARAMETERS = [
         "description": "[-] Calm value of the PWM for throttle."
     }),
 
+    ("vesc_control_method", ControlMethod),
+
     ("vesc_speed", {
         "default": 0.0, "min": 0.0, "max": 10.0,
         "description": "[m.s^-1] Car speed."
+    }),
+
+    ("vesc_current", {
+        "default": 0.0, "min": 0.0, "max": 10.0,
+        "description": "[A] Current used for controlling the car."
     }),
 
     ("publish_rate", {
@@ -80,8 +94,11 @@ class SimpleDrive(Node):
         self.pub_teensy = self.create_publisher(
             DriveValues, "/drive_pwm", 1
         )
-        self.pub_vesc = self.create_publisher(
+        self.pub_vesc_speed = self.create_publisher(
             Float64, "/commands/motor/speed", 1
+        )
+        self.pub_vesc_current = self.create_publisher(
+            Float64, "/commands/motor/current", 1
         )
 
         # Timers
@@ -102,11 +119,18 @@ class SimpleDrive(Node):
             )
         )
 
-        self.pub_vesc.publish(
-            Float64(
-                data = self.P.vesc_speed
+        if self.P.vesc_control_method == ControlMethod.SPEED:
+            self.pub_vesc_speed.publish(
+                Float64(
+                    data = self.P.vesc_speed * 4103.0
+                )
             )
-        )
+        elif self.P.vesc_control_method == ControlMethod.CURRENT:
+            self.pub_vesc_current.publish(
+                Float64(
+                    data = self.P.vesc_current
+                )
+            )
 
 
 ######################
