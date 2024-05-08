@@ -33,6 +33,7 @@ A = 0.3
 CL = 1.0
 L = 0.33
 M = 3.68
+VLIM = 4.5
 
 figure = None
 line = None
@@ -131,7 +132,13 @@ if __name__ == "__main__":
         radius = (MU * G),  # x**2 + y**2 <= R**2
         ls = "--", facecolor = 'r', edgecolor = 'k', alpha = 0.25, lw = 2.0
     )
+    limit2 = pyplot.Circle(
+        xy = (0, 0),
+        radius = MU * (G + 0.5 * RO * A * CL * VLIM**2 / M),
+        ls = "--", facecolor = 'g', edgecolor = 'k', alpha = 0.25, lw = 2.0
+    )
     figure.gca().add_patch(limit)
+    figure.gca().add_patch(limit2)
     figure.gca().set_aspect("equal")
     figure.gca().set_title("g-g diagram")
     figure.gca().set_xlabel("lateral acceleration [m.s^{-2}]")
