@@ -109,8 +109,8 @@ if __name__ == "__main__":
     figure = pyplot.figure()
     line, = pyplot.plot(x_data, y_data, '-')
     figure.gca().set_title("g-g diagram")
-    figure.gca().set_xlabel("a_{x} [m.s^{-2}]")
-    figure.gca().set_ylabel("a_{y} [m.s^{-2}]")
+    figure.gca().set_xlabel("g_x")
+    figure.gca().set_ylabel("g_y")
 
     animation = FuncAnimation(figure, update, interval=200)
 
