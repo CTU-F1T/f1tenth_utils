@@ -99,6 +99,18 @@ class StateNode(Node):
         sys.stdout.write("\n" * self.STATES)
         self.print_data = self.Timer(0.02, self.callback_timer)
 
+        self.timestamp = self.get_time()
+
+        try:
+            open("states.log", "r")
+            self.logwarn("Appending to an already exiting states file.")
+        except IOError:
+            self.loginfo("Creating file 'states.log'")
+            with open("states.log", "w") as f:
+                f.write("t_s,x_m,y_m,v_mps\n")
+
+        self.log_data = self.Timer(0.1, self.callback_log_data)
+
 
     def callback_odom(self, data):
         """Obtain data from Odometry."""
@@ -163,6 +175,17 @@ class StateNode(Node):
         print("v:\t%+.6f m/s\t(%+.2f km/h)" % (self.v, self.v * 3.6))
         print("dv:\t%+.6f m/s\t(%+.2f km/h)" % (self.v - self.plan_v, (self.v - self.plan_v) * 3.6))
         print("delta:\t%+.6f    \t(%+.2f deg)" % (self.delta, math.degrees(self.delta)))
+
+
+    def callback_log_data(self, *args, **kwargs):
+        """Log data."""
+        with open("states.log", "a+") as f:
+            f.write(
+                "%f,%f,%f,%f\n"
+                % (
+                    (self.get_time() - self.timestamp), self.x, self.y, self.v
+                )
+            )
 
 
 ######################
