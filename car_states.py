@@ -156,9 +156,9 @@ class StateNode(Node):
 
         FIXME: Yes, it is hardcoded.
         """
-        if STEER_LEFT_MIN => pwm => STEER_LEFT_MAX:
+        if STEER_LEFT_MIN >= pwm >= STEER_LEFT_MAX:
             self.delta = math.radians(((STEER_LEFT_MIN - pwm) / (STEER_LEFT_MIN - STEER_LEFT_MAX)) * STEER_LEFT_DEG)
-        elif STEER_RIGHT_MAX => pwm => STEER_RIGHT_MIN:
+        elif STEER_RIGHT_MAX >= pwm >= STEER_RIGHT_MIN:
             self.delta = -math.radians(((pwm - STEER_RIGHT_MIN) / (STEER_RIGHT_MAX - STEER_RIGHT_MIN)) * STEER_RIGHT_DEG)
         else:
             self.delta = 0.0
