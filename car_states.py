@@ -71,8 +71,9 @@ class StateNode(Node):
         self.v = 0
         self.dv = 0
         self.delta = 0
+        self.voltage = 0
 
-        self.STATES = 7
+        self.STATES = 8
 
 
         self.last_pwm_high = 0
@@ -122,6 +123,7 @@ class StateNode(Node):
     def callback_vesc(self, data):
         """Obtain data from VESC."""
         self.v = data.state.speed / 4105.324277107
+        self.voltage = data.state.voltage_input
 
 
     def callback_speed(self, data):
@@ -175,6 +177,7 @@ class StateNode(Node):
         print("v:\t%+.6f m/s\t(%+.2f km/h)" % (self.v, self.v * 3.6))
         print("dv:\t%+.6f m/s\t(%+.2f km/h)" % (self.v - self.plan_v, (self.v - self.plan_v) * 3.6))
         print("delta:\t%+.6f    \t(%+.2f deg)" % (self.delta, math.degrees(self.delta)))
+        print("voltage:\t%2.1f V" % (self.voltage))
 
 
     def callback_log_data(self, *args, **kwargs):
