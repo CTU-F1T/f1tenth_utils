@@ -26,6 +26,9 @@ from matplotlib.animation import FuncAnimation
 
 # Message types
 from std_msgs.msg import String
+from std_srvs.srv import Trigger
+TriggerRequest = Trigger._request_class
+TriggerResponse = Trigger._response_class
 
 # Global variables
 last_int_x = None
@@ -34,6 +37,7 @@ path_length = 0
 figure = None
 line = None
 x_data, y_data = [], []
+y_data_history = {}
 
 INTERPOLATE = True
 print ("Running with INTERPOLATE = %s" % str(INTERPOLATE))
@@ -116,6 +120,12 @@ def update_data(data):
     # Save the value for the next loop.
     last_int_x = int_x
 
+    # Append the value to the history
+    if int_x not in y_data_history:
+        y_data_history[int_x] = [y]
+    else:
+        y_data_history[int_x].append(y)
+
 
 class Updater(Thread):
     """Node wrapper that runs the node in a separate thread.
@@ -135,10 +145,57 @@ class Updater(Thread):
             String, update_data, queue_size = 1
         )
 
+        self.n.Service(
+            "get_history_mean", Trigger, self.service_history_mean
+        )
+
+        self.n.Service(
+            "erase_history", Trigger, self.service_erase_history
+        )
+
 
     def run(self):
         """Overloaded threading.Thread function."""
         Core.spin(self.n)
+
+
+    def service_history_mean(self, msg, response = None):
+        """Callback service request '/get_history_mean'."""  # noqa: D401
+        global y_data_history
+
+        if response is not None:
+            self.n.logerr(
+                "ROS2 is not currently supported here."
+            )
+            return
+
+        response = TriggerResponse()
+        response.success = True
+        response.message = ";".join([
+            "%d,%f" % (_x, numpy.mean(y_data_history[_x]))
+            for _x in sorted(y_data_history)
+        ])
+
+        return response
+
+
+    def service_erase_history(self, msg, response = None):
+        """Callback service request '/erase_history'."""  # noqa: D401
+        global y_data_history
+
+        if response is not None:
+            self.n.logerr(
+                "ROS2 is not currently supported here."
+            )
+            return
+
+        response = TriggerResponse()
+        response.success = True
+        y_data_history = {}
+
+        self.n.loginfo("History erased.")
+
+        return response
 
 
 ######################
