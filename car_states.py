@@ -13,6 +13,7 @@ from autopsy.node import Node
 
 import math
 import sys
+import argparse
 
 # ROS Messages
 from nav_msgs.msg import Odometry
@@ -23,6 +24,32 @@ if ROS_VERSION == 1:
     from teensy.msg import drive_values
 else:
     from teensy_drive_msgs.msg import DriveValues as drive_values
+
+
+# Arguments
+PARSER = argparse.ArgumentParser(
+    prog = "car_states.py",
+    formatter_class = argparse.RawDescriptionHelpFormatter,
+    description = """
+Utility for displaying current car states.
+""",
+)
+
+PARSER.add_argument(
+    "-p",
+
+    dest = "p_output",
+    help = "Format states in a csv format",
+    action = "store_true",
+)
+
+PARSER.add_argument(
+    "-s",
+
+    dest = "save",
+    help = "Save the states into 'states.log' file",
+    action = "store_true",
+)
 
 
 # Constants
@@ -59,7 +86,7 @@ def quaternion_to_yaw(q):
 class StateNode(Node):
     """ROS node that observes and prints states of the car."""
 
-    def __init__(self):
+    def __init__(self, p_output = False, save = False):
         """Initialize node."""
         super(StateNode, self).__init__("state_watcher")
 
@@ -97,20 +124,25 @@ class StateNode(Node):
                                         PointStamped, self.callback_curp,
                                         queue_size = 1, tcp_nodelay = True)
 
-        sys.stdout.write("\n" * self.STATES)
-        self.print_data = self.Timer(0.02, self.callback_timer)
+        if not p_output:
+            sys.stdout.write("\n" * self.STATES)
+            self.print_data = self.Timer(0.02, self.callback_timer)
+        else:
+            print("x_m,y_m,d_m,theta_rad,v_mps,dv_mps,delta_rad,voltage_v")
+            self.print_data = self.Timer(0.02, self.callback_timer_p)
 
         self.timestamp = self.get_time()
 
-        try:
-            open("states.log", "r")
-            self.logwarn("Appending to an already exiting states file.")
-        except IOError:
-            self.loginfo("Creating file 'states.log'")
-            with open("states.log", "w") as f:
-                f.write("t_s,x_m,y_m,v_mps\n")
+        if save:
+            try:
+                open("states.log", "r")
+                self.logwarn("Appending to an already exiting states file.")
+            except IOError:
+                self.loginfo("Creating file 'states.log'")
+                with open("states.log", "w") as f:
+                    f.write("t_s,x_m,y_m,v_mps\n")
 
-        self.log_data = self.Timer(0.1, self.callback_log_data)
+            self.log_data = self.Timer(0.1, self.callback_log_data)
 
 
     def callback_odom(self, data):
@@ -180,6 +212,20 @@ class StateNode(Node):
         print("voltage:\t%2.1f V" % (self.voltage))
 
 
+    def callback_timer_p(self, *args, **kwargs):
+        """Print out current states in -p format."""
+        print(",".join([
+            "%s" % str(self.x),
+            "%s" % str(self.y),
+            "%.6f" % self.d,
+            "%.6f" % self.theta,
+            "%.6f" % self.v,
+            "%.6f" % (self.v - self.plan_v),
+            "%.6f" % self.delta,
+            "%2.1f" % self.voltage,
+        ]))
+
+
     def callback_log_data(self, *args, **kwargs):
         """Log data."""
         with open("states.log", "a+") as f:
@@ -200,9 +246,14 @@ class StateNode(Node):
 ## TODO: Publikovat rozdil polohy (aktualni x reference)
 
 if __name__ == '__main__':
-    Core.init()
+    args, others = PARSER.parse_known_args()
 
-    n = StateNode()
+    Core.init(args = args)
+
+    n = StateNode(
+        p_output = args.p_output,
+        save = args.save,
+    )
 
     Core.spin(n)
 
