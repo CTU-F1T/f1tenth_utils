@@ -208,13 +208,23 @@ def main():
     print ("Loaded %d points." % len(t))
 
 
-    reader = csv.DictReader(
-        args.error_file, fieldnames = ["time", "index", "error"]
-    )
-    reader.next()
+    try:
+        reader = csv.DictReader(
+            args.error_file, fieldnames = ["time", "index", "error"]
+        )
+        reader.next()
 
-    for row in reader:
-        t[int(float(row["index"]))].setError(float(row["error"]))
+        for row in reader:
+            t[int(float(row["index"]))].setError(float(row["error"]))
+
+    except Exception:
+        reader = csv.DictReader(
+            args.error_file, fieldnames = ["index", "error"]
+        )
+        reader.next()
+
+        for row in reader:
+            t[int(float(row["index"]))].setError(float(row["error"]))
 
 
     x2, y2 = scatterTrajectoryError(t, args.e)
