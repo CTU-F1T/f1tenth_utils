@@ -10,6 +10,7 @@ It supports full trajectories and plain xy data.
 
 import argparse
 import csv
+import time
 
 from autopsy.core import Core
 from autopsy.node import Node
@@ -76,3 +77,6 @@ if __name__ == "__main__":
     pub.publish(msg)
 
     n.loginfo("Published path with %d poses." % len(msg.poses))
+
+    n.loginfo("Waiting for 5 seconds before exiting.")
+    time.sleep(5)
