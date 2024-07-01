@@ -54,7 +54,7 @@ if __name__ == "__main__":
     n = Node("load_path")
 
     pub = n.Publisher(
-        "path", Path, queue_size = 1
+        "path", Path, queue_size = 1, latch = True
     )
 
     # Create data
