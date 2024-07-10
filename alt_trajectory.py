@@ -24,7 +24,7 @@ from functools import partial
 
 
 # ROS messages
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Pose
 from std_msgs.msg import String
 from nav_msgs.msg import Path
 from autoware_auto_msgs.msg import Trajectory
@@ -106,12 +106,19 @@ class PathHandler(object):
         def to_msg(self):
             """Convert the Point into PoseStamped message."""
             p = PoseStamped()
-            p.pose.position.x = self.ex
-            p.pose.position.y = self.ey
-            p.pose.orientation.x = self.ox
-            p.pose.orientation.y = self.oy
-            p.pose.orientation.z = self.oz
-            p.pose.orientation.w = self.ow
+            p.pose = self.to_pose_msg()
+            return p
+
+
+        def to_pose_msg(self):
+            """Convert the Point into Pose message."""
+            p = Pose()
+            p.position.x = self.ex
+            p.position.y = self.ey
+            p.orientation.x = self.ox
+            p.orientation.y = self.oy
+            p.orientation.z = self.oz
+            p.orientation.w = self.ow
             return p
 
 
