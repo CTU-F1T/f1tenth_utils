@@ -122,11 +122,12 @@ class PathHandler(object):
             return p
 
 
-    def __init__(self, points = [], frame_id = "map"):
+    def __init__(self, points = [], frame_id = "map", trajectory = None):
         """Initialize the path handler."""
         super(PathHandler, self).__init__()
         self.points = points
         self.frame_id = frame_id
+        self.trajectory = trajectory
 
         self._x = None
         self._y = None
@@ -150,7 +151,8 @@ class PathHandler(object):
         """Form a path from a Trajectory message."""
         return cls(
             [PathHandler.Point.from_pose(point.pose) for point in msg.points],
-            frame_id = msg.header.frame_id
+            frame_id = msg.header.frame_id,
+            trajectory = msg
         )
 
 
@@ -243,6 +245,22 @@ class PathHandler(object):
         return pth
 
 
+    def to_trajectory_msg(self):
+        """Convert the path into Trajectory message, reusing states."""
+        if self.trajectory is None:
+            raise ValueError(
+                "Unable to construct Trajectory message as it was not "
+                "received yet."
+            )
+
+        traj = self.trajectory
+
+        for i in range(len(self.points)):
+            traj.points[i].pose = self.points[i].to_pose_msg()
+
+        return traj
+
+
 ######################
 # Node
 ######################
@@ -289,6 +307,16 @@ class RunNode(Node):
         Note: *args, **kwargs are required because of @Timer.
         """
         return self.original_path.to_msg()
+
+
+    @Timer(20)
+    @Publisher("/trajectory/moved", Trajectory, latch = True)
+    def pub_trajectory(self, *args, **kwargs):
+        """Publish the edited path.
+
+        Note: *args, **kwargs are required because of @Timer.
+        """
+        return self.original_path.to_trajectory_msg()
 
 
 ######################
