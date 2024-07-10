@@ -20,12 +20,20 @@ from tf.transformations import (
     quaternion_from_euler
 )
 
+from functools import partial
+
 
 # ROS messages
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import String
 from nav_msgs.msg import Path
 from autoware_auto_msgs.msg import Trajectory
+
+
+# Global variables
+# Set default values of the decorators
+Publisher = partial(Publisher, queue_size = 1)
+Subscriber = partial(Subscriber, queue_size = 1)
 
 
 ######################
@@ -240,7 +248,7 @@ class RunNode(Node):
         super(RunNode, self).__init__(name, *args, **kwargs)
 
 
-    @Subscriber("/path/original", Path, queue_size = 1)
+    @Subscriber("/path/original", Path)
     # TODO: Path actually does not contain the orientation every time.
     def callback_original_path(self, msg):
         """Obtain the original path to be moved."""
@@ -248,7 +256,7 @@ class RunNode(Node):
         self.original_path = PathHandler.from_msg(msg)
 
 
-    @Subscriber("/trajectory/original", Trajectory, queue_size = 1)
+    @Subscriber("/trajectory/original", Trajectory)
     def callback_original_trajectory(self, msg):
         """Obtain the original trajectory to be moved."""
         self.loginfo(
@@ -257,7 +265,7 @@ class RunNode(Node):
         self.original_path = PathHandler.from_trajectory_msg(msg)
 
 
-    @Subscriber("/trajectory/difference/index_lateral", String, queue_size = 1)
+    @Subscriber("/trajectory/difference/index_lateral", String)
     def callback_error(self, msg):
         """Obtain the tracking error."""
         index, error = msg.data.split(",")
@@ -267,7 +275,7 @@ class RunNode(Node):
 
 
     @Timer(20)
-    @Publisher("/path/moved", Path, queue_size = 1, latch = True)
+    @Publisher("/path/moved", Path, latch = True)
     def pub_path(self, *args, **kwargs):
         """Publish the edited path.
 
