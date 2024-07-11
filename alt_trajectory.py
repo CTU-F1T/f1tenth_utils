@@ -386,7 +386,7 @@ class RunNode(Node):
         return m
 
 
-    @Timer(60)
+    @Timer(70)
     @Publisher("/friction_vector/change_diff", String)
     def pub_fvector(self, *args, **kwargs):
         """Publish the friction vector to update the trajectory speed.
@@ -401,7 +401,7 @@ class RunNode(Node):
             if err < 0.1:
                 errs.append(0.05)
             elif err < 0.4:
-                errs.append(-(err - 0.1) / 0.2)
+                errs.append(-(err - 0.1) / 2.0)
             else:
                 errs.append(-0.15)
 
