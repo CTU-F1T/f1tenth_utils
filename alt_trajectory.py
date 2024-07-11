@@ -60,6 +60,7 @@ class PathHandler(object):
             self.ez = z
             self.error = 0.0
             self.last_error = 0.0
+            self.last_valid_error = 0.0
 
 
         @classmethod
@@ -104,6 +105,7 @@ class PathHandler(object):
             self.ex = self.x + math.cos(self.yaw + math.radians(90)) * error
             self.ey = self.y + math.sin(self.yaw + math.radians(90)) * error
             self.last_error = error
+            self.last_valid_error = error
 
 
         def save_error(self):
@@ -198,6 +200,12 @@ class PathHandler(object):
     def error(self):
         """Get the vector of all error values."""
         return [p.error for p in self.points]
+
+
+    @property
+    def last_valid_error(self):
+        """Get the vector of all error values."""
+        return [p.last_valid_error for p in self.points]
 
 
     def arange(self, start_index, end_index):
@@ -378,14 +386,13 @@ class RunNode(Node):
 
         Note: *args, **kwargs are required because of @Timer.
         """
-        errs = self.original_path.error
-
         errs = []
-        for val in self.original_path.error:
+
+        for val in self.original_path.last_valid_error:
             err = abs(val)
 
             if err < 0.1:
-                errs.append(0.0)
+                errs.append(0.05)
             elif err < 0.4:
                 errs.append(-(err - 0.1) / 0.2)
             else:
