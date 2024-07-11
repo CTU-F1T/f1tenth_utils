@@ -169,6 +169,11 @@ class PathHandler(object):
         )
 
 
+    def update(self, msg):
+        """Update speed profile from the message."""
+        self.trajectory = msg
+
+
     @property
     def x(self):
         """Get the vector of all x-values."""
@@ -319,8 +324,10 @@ class RunNode(Node):
     def callback_original_trajectory(self, msg):
         """Obtain the original trajectory to be moved."""
         if self.original_path is not None:
-            self.logwarn(
-                "Received another trajectory, however only one is allowed."
+            self.original_path.update(msg)
+
+            self.loginfo(
+                "Updated trajectory speed profile."
             )
             return
 
@@ -366,7 +373,7 @@ class RunNode(Node):
 
 
     @Timer(20)
-    @Publisher("/trajectory/autoware", Trajectory, latch = True)
+    @Publisher("/trajectory", Trajectory, latch = True)
     def pub_trajectory(self, *args, **kwargs):
         """Publish the edited path.
 
