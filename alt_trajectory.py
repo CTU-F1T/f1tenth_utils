@@ -388,14 +388,18 @@ class RunNode(Node):
 
     @Timer(70)
     @Publisher("/friction_vector/change_diff", String)
+    @Publisher("/trajectory/tracking_error", String)
+    @Publisher("/trajectory/tracking_error_total", String)
     def pub_fvector(self, *args, **kwargs):
         """Publish the friction vector to update the trajectory speed.
 
         Note: *args, **kwargs are required because of @Timer.
         """
         errs = []
+        error = self.original_path.error
+        lverror = self.original_path.last_valid_error
 
-        for total_error, last_error in zip(self.original_path.error, self.original_path.last_valid_error):
+        for total_error, last_error in zip(error, lverror):
             if abs(total_error) > 1.0:
                 errs.append(-0.2)
             else:
@@ -408,7 +412,11 @@ class RunNode(Node):
                 else:
                     errs.append(-0.15)
 
-        return String(",".join(["%f" % value for value in errs]))
+        return [
+            String(",".join(["%f" % value for value in errs])),
+            String(",".join(["%f" % value for value in lverror])),
+            String(",".join(["%f" % value for value in error]))
+        ]
 
 
 ######################
