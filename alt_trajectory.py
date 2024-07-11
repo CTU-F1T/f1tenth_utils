@@ -58,6 +58,8 @@ class PathHandler(object):
             self.ex = x
             self.ey = y
             self.ez = z
+            self.error = 0.0
+            self.last_error = 0.0
 
 
         @classmethod
@@ -101,12 +103,15 @@ class PathHandler(object):
             """Apply error to the point."""
             self.ex = self.x + math.cos(self.yaw + math.radians(90)) * error
             self.ey = self.y + math.sin(self.yaw + math.radians(90)) * error
+            self.last_error = error
 
 
         def save_error(self):
             """Save the error by changing the point location."""
             self.x = self.ex
             self.y = self.ey
+            self.error += self.last_error
+            self.last_error = 0.0
 
 
         def to_msg(self):
