@@ -322,7 +322,7 @@ class RunNode(Node):
         self.original_path = PathHandler.from_trajectory_msg(msg)
 
 
-    @Subscriber("/trajectory/difference/index_lateral", String)
+    @Subscriber("/trajectory/difference/index_lateral_first", String)
     def callback_error(self, msg):
         """Obtain the tracking error."""
         if self.saving:
