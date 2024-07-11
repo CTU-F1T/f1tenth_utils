@@ -412,10 +412,13 @@ class RunNode(Node):
                 else:
                     errs.append(-0.15)
 
+
+        # THIS NEEDS TO BE REVERSED NOW!
+        # FIXME!
         return [
-            String(",".join(["%f" % value for value in errs])),
-            String(",".join(["%f" % value for value in lverror])),
             String(",".join(["%f" % value for value in error]))
+            String(",".join(["%f" % value for value in lverror])),
+            String(",".join(["%f" % value for value in errs])),
         ]
 
 
