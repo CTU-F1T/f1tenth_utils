@@ -299,6 +299,12 @@ class RunNode(Node):
     @Subscriber("/trajectory/original", Trajectory)
     def callback_original_trajectory(self, msg):
         """Obtain the original trajectory to be moved."""
+        if self.original_path is not None:
+            self.logwarn(
+                "Received another trajectory, however only one is allowed."
+            )
+            return
+
         self.loginfo(
             "Received original trajectory with size %d." % len(msg.points)
         )
