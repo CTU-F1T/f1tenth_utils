@@ -296,7 +296,7 @@ class RunNode(Node):
         self.original_path = PathHandler.from_msg(msg)
 
 
-    @Subscriber("/trajectory/original", Trajectory)
+    @Subscriber("/trajectory/autoware", Trajectory)
     def callback_original_trajectory(self, msg):
         """Obtain the original trajectory to be moved."""
         if self.original_path is not None:
@@ -347,7 +347,7 @@ class RunNode(Node):
 
 
     @Timer(20)
-    @Publisher("/trajectory/moved", Trajectory, latch = True)
+    @Publisher("/trajectory/autoware", Trajectory, latch = True)
     def pub_trajectory(self, *args, **kwargs):
         """Publish the edited path.
 
