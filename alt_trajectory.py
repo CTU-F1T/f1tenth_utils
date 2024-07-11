@@ -395,15 +395,18 @@ class RunNode(Node):
         """
         errs = []
 
-        for val in self.original_path.last_valid_error:
-            err = abs(val)
-
-            if err < 0.1:
-                errs.append(0.05)
-            elif err < 0.4:
-                errs.append(-(err - 0.1) / 2.0)
+        for total_error, last_error in zip(self.original_path.error, self.original_path.last_valid_error):
+            if abs(total_error) > 1.0:
+                errs.append(-0.2)
             else:
-                errs.append(-0.15)
+                err = abs(last_error)
+
+                if err < 0.1:
+                    errs.append(0.05)
+                elif err < 0.4:
+                    errs.append(-(err - 0.1) / 2.0)
+                else:
+                    errs.append(-0.15)
 
         return String(",".join(["%f" % value for value in errs]))
 
