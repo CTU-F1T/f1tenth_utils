@@ -194,6 +194,12 @@ class PathHandler(object):
         return self._yaw
 
 
+    @property
+    def error(self):
+        """Get the vector of all error values."""
+        return [p.error for p in self.points]
+
+
     def arange(self, start_index, end_index):
         """Create a range of indices.
 
@@ -363,6 +369,29 @@ class RunNode(Node):
         m = self.original_path.to_trajectory_msg()
         self.saving = False
         return m
+
+
+    @Timer(60)
+    @Publisher("/friction_vector/change_diff", String)
+    def pub_fvector(self, *args, **kwargs):
+        """Publish the friction vector to update the trajectory speed.
+
+        Note: *args, **kwargs are required because of @Timer.
+        """
+        errs = self.original_path.error
+
+        errs = []
+        for val in self.original_path.error:
+            err = abs(val)
+
+            if err < 0.1:
+                errs.append(0.0)
+            elif err < 0.4:
+                errs.append(-(err - 0.1) / 0.2)
+            else:
+                errs.append(-0.15)
+
+        return String(",".join(["%f" % value for value in errs]))
 
 
 ######################
