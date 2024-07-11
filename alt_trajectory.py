@@ -103,6 +103,12 @@ class PathHandler(object):
             self.ey = self.y + math.sin(self.yaw + math.radians(90)) * error
 
 
+        def save_error(self):
+            """Save the error by changing the point location."""
+            self.x = self.ex
+            self.y = self.ey
+
+
         def to_msg(self):
             """Convert the Point into PoseStamped message."""
             p = PoseStamped()
@@ -235,6 +241,12 @@ class PathHandler(object):
         self.last_error = error
 
 
+    def save_error(self):
+        """Save the error in every point of the path."""
+        for p in self.points:
+            p.save_error()
+
+
     def to_msg(self):
         """Convert the path into Path message."""
         pth = Path()
@@ -272,6 +284,9 @@ class RunNode(Node):
         """Initialize the node."""
         super(RunNode, self).__init__(name, *args, **kwargs)
 
+        self.original_path = None
+        self.saving = False
+
 
     @Subscriber("/path/original", Path)
     # TODO: Path actually does not contain the orientation every time.
@@ -293,20 +308,36 @@ class RunNode(Node):
     @Subscriber("/trajectory/difference/index_lateral", String)
     def callback_error(self, msg):
         """Obtain the tracking error."""
+        if self.saving:
+            return
+
         index, error = msg.data.split(",")
         self.original_path.apply_error_with_interpolation(
             int(float(index)), float(error)
         )
 
 
-    @Timer(20)
+    @Timer(1)
+    @Publisher("/path/visualization", Path)
+    def pub_path_viz(self, *args, **kwargs):
+        """Publish the edited path for visualization.
+
+        Note: *args, **kwargs are required because of @Timer.
+        """
+        return self.original_path.to_msg()
+
+
     @Publisher("/path/moved", Path, latch = True)
     def pub_path(self, *args, **kwargs):
         """Publish the edited path.
 
         Note: *args, **kwargs are required because of @Timer.
         """
-        return self.original_path.to_msg()
+        self.saving = True
+        self.original_path.save_error()
+        m = self.original_path.to_msg()
+        self.saving = False
+        return m
 
 
     @Timer(20)
@@ -316,7 +347,11 @@ class RunNode(Node):
 
         Note: *args, **kwargs are required because of @Timer.
         """
-        return self.original_path.to_trajectory_msg()
+        self.saving = True
+        self.original_path.save_error()
+        m = self.original_path.to_trajectory_msg()
+        self.saving = False
+        return m
 
 
 ######################
