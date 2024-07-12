@@ -400,6 +400,7 @@ class RunNode(Node):
         lverror = self.original_path.last_valid_error
 
         for total_error, last_error in zip(error, lverror):
+            """
             if abs(total_error) > 1.0:
                 errs.append(-0.2)
             else:
@@ -411,6 +412,15 @@ class RunNode(Node):
                     errs.append(-(err - 0.1) / 2.0)
                 else:
                     errs.append(-0.15)
+            """
+            err = abs(last_error)
+
+            if err < 0.07:
+                errs.append(0.05)
+            elif err < 0.12:
+                errs.append(0.0)
+            else:
+                errs.append(-0.05)
 
         return [
             String(",".join(["%f" % value for value in errs])),
