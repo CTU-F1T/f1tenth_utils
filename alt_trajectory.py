@@ -356,7 +356,8 @@ class RunNode(Node):
 
         Note: *args, **kwargs are required because of @Timer.
         """
-        return self.original_path.to_msg()
+        if self.original_path is not None:
+            return self.original_path.to_msg()
 
 
     @Publisher("/path/moved", Path, latch = True)
@@ -379,11 +380,12 @@ class RunNode(Node):
 
         Note: *args, **kwargs are required because of @Timer.
         """
-        self.saving = True
-        self.original_path.save_error()
-        m = self.original_path.to_trajectory_msg()
-        self.saving = False
-        return m
+        if self.original_path is not None:
+            self.saving = True
+            self.original_path.save_error()
+            m = self.original_path.to_trajectory_msg()
+            self.saving = False
+            return m
 
 
     @Timer(70)
@@ -395,6 +397,9 @@ class RunNode(Node):
 
         Note: *args, **kwargs are required because of @Timer.
         """
+        if self.original_path is None:
+            return None
+
         errs = []
         error = self.original_path.error
         lverror = self.original_path.last_valid_error
