@@ -250,12 +250,12 @@ class PathHandler(object):
         """
         if self.last_error is not None:
             rg = self.arange(self.last_index, index)
-            for i in rg:
+            for _i, i in enumerate(rg):
                 self.apply_error(
                     i,
                     (
                         self.last_error
-                        + (error - self.last_error) / (1 + len(rg))
+                        + _i * (error - self.last_error) / (1 + len(rg))
                     )
                 )
 
