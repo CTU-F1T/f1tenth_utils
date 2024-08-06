@@ -414,7 +414,9 @@ class RunNode(Node):
         error = self.original_path.error
         lverror = self.original_path.last_valid_error
 
-        for total_error, last_error in zip(error, lverror):
+        errs_from_total = [0.0 for i in range(len(error))]
+
+        for index, (total_error, last_error) in enumerate(zip(error, lverror)):
             """
             if abs(total_error) > 1.0:
                 errs.append(-0.2)
@@ -428,9 +430,11 @@ class RunNode(Node):
                 else:
                     errs.append(-0.15)
             """
-            if abs(total_error) > 0.8:
+            if abs(total_error) >= 0.8:
                 errs.append(-0.02)
 
+                for i in self.original_path.arange(index - 20, index):
+                    errs_from_total[i] += 1.0
             else:
                 err = abs(last_error)
 
@@ -440,6 +444,10 @@ class RunNode(Node):
                     errs.append(0.0)
                 else:
                     errs.append(-0.02)
+
+        for i in range(len(errs)):
+            if errs_from_total[i] > 0.0:
+                errs[i] += -0.01
 
         return [
             String(",".join(["%f" % value for value in errs])),
