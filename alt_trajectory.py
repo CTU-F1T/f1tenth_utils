@@ -386,7 +386,7 @@ class RunNode(Node):
         return m
 
 
-    @Timer(20)
+    @Timer(2)  # 20
     @Publisher("/trajectory", Trajectory, latch = True)
     def pub_trajectory(self, *args, **kwargs):
         """Publish the edited path.
@@ -401,7 +401,7 @@ class RunNode(Node):
             return m
 
 
-    @Timer(70)
+    @Timer(10)  # 70
     @Publisher("/friction_vector/change_diff", String)
     @Publisher("/trajectory/tracking_error", String)
     @Publisher("/trajectory/tracking_error_total", String)
@@ -420,19 +420,6 @@ class RunNode(Node):
         errs_from_total = [0.0 for i in range(len(error))]
 
         for index, (total_error, last_error) in enumerate(zip(error, lverror)):
-            """
-            if abs(total_error) > 1.0:
-                errs.append(-0.2)
-            else:
-                err = abs(last_error)
-
-                if err < 0.1:
-                    errs.append(0.05)
-                elif err < 0.4:
-                    errs.append(-(err - 0.1) / 2.0)
-                else:
-                    errs.append(-0.15)
-            """
             if abs(total_error) >= MAX_ERROR:
                 errs.append(-0.02)
 
