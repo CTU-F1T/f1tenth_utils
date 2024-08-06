@@ -51,6 +51,9 @@ class PathHandler(object):
             self.x = x
             self.y = y
             self.z = z
+            self.orig_x = x
+            self.orig_y = y
+            self.orig_z = z
             self.ox = ox
             self.oy = oy
             self.oz = oz
@@ -89,6 +92,12 @@ class PathHandler(object):
             )[-1]
 
 
+        @property
+        def yaw_normal(self):
+            """Get the normal to the yaw angle / orientation of the point."""
+            return self.yaw + math.radians(90)
+
+
         # @classmethod
         # def apply_error(cls, self, error):
         #     """Return a point moved by a lateral error."""
@@ -110,10 +119,11 @@ class PathHandler(object):
 
         def save_error(self):
             """Save the error by changing the point location."""
-            self.x = self.ex
-            self.y = self.ey
-            self.error += self.last_error
+            self.error = min(max(-0.8, self.error + self.last_error), 0.8)
             self.last_error = 0.0
+
+            self.x = self.orig_x + math.cos(self.yaw_normal) * self.error
+            self.y = self.orig_y + math.sin(self.yaw_normal) * self.error
 
 
         def to_msg(self):
@@ -418,14 +428,18 @@ class RunNode(Node):
                 else:
                     errs.append(-0.15)
             """
-            err = abs(last_error)
+            if abs(total_error) > 0.8:
+                errs.append(-0.02)
 
-            if err < 0.07:
-                errs.append(0.05)
-            elif err < 0.12:
-                errs.append(0.0)
             else:
-                errs.append(-0.05)
+                err = abs(last_error)
+
+                if err < 0.07:
+                    errs.append(0.02)
+                elif err < 0.12:
+                    errs.append(0.0)
+                else:
+                    errs.append(-0.02)
 
         return [
             String(",".join(["%f" % value for value in errs])),
