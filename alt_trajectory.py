@@ -34,6 +34,7 @@ from autoware_auto_msgs.msg import Trajectory
 # Set default values of the decorators
 Publisher = partial(Publisher, queue_size = 1)
 Subscriber = partial(Subscriber, queue_size = 1)
+MAX_ERROR = 0.8
 
 
 ######################
@@ -119,7 +120,9 @@ class PathHandler(object):
 
         def save_error(self):
             """Save the error by changing the point location."""
-            self.error = min(max(-0.8, self.error + self.last_error), 0.8)
+            self.error = min(
+                max(-MAX_ERROR, self.error + self.last_error), MAX_ERROR
+            )
             self.last_error = 0.0
 
             self.x = self.orig_x + math.cos(self.yaw_normal) * self.error
@@ -430,7 +433,7 @@ class RunNode(Node):
                 else:
                     errs.append(-0.15)
             """
-            if abs(total_error) >= 0.8:
+            if abs(total_error) >= MAX_ERROR:
                 errs.append(-0.02)
 
                 for i in self.original_path.arange(index - 20, index):
