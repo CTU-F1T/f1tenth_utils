@@ -11,6 +11,8 @@ package in the future.
 
 import math
 
+import numpy
+
 from autopsy.node import Node
 # Requires autopsy>0.10.7; but may be incompatible with 0.11
 from autopsy.helpers import Publisher, Subscriber, Execute, Timer
@@ -34,7 +36,10 @@ from autoware_auto_msgs.msg import Trajectory
 # Set default values of the decorators
 Publisher = partial(Publisher, queue_size = 1)
 Subscriber = partial(Subscriber, queue_size = 1)
-MAX_ERROR = 0.8
+MAX_ERROR = 2.0
+MAX_STEERING = 30  # deg
+L = 0.32
+K_LIM = numpy.tan(numpy.radians(MAX_STEERING)) / (2 * L)
 
 
 ######################
@@ -118,10 +123,23 @@ class PathHandler(object):
             self.last_valid_error = error
 
 
-        def save_error(self):
+        def distanceTo(self, other):
+            """Distance to different point.
+
+            Returns:
+            distance to other point, [m], float
+            """
+            return (
+                (other.orig_x - self.orig_x)**2
+                + (other.orig_y - self.orig_y)**2
+                + (other.orig_z - self.orig_z)**2
+            )**0.5
+
+
+        def save_error(self, left = MAX_ERROR, right = -MAX_ERROR):
             """Save the error by changing the point location."""
             self.error = min(
-                max(-MAX_ERROR, self.error + self.last_error), MAX_ERROR
+                max(right, self.error + self.last_error), left
             )
             self.last_error = 0.0
 
@@ -153,7 +171,7 @@ class PathHandler(object):
         super(PathHandler, self).__init__()
         self.points = points
         self.frame_id = frame_id
-        self.trajectory = trajectory
+        self.update(trajectory)
 
         self._x = None
         self._y = None
@@ -161,6 +179,9 @@ class PathHandler(object):
         self._dirty = False
         self.last_error = None
         self.last_index = None
+        self.error_limits = [0.0 for _ in range(len(points))]
+        self.left_error = [MAX_ERROR for _ in range(len(points))]
+        self.right_error = [-MAX_ERROR for _ in range(len(points))]
 
 
     @classmethod
@@ -185,6 +206,7 @@ class PathHandler(object):
     def update(self, msg):
         """Update speed profile from the message."""
         self.trajectory = msg
+        self.update_error_limit()
 
 
     @property
@@ -280,8 +302,10 @@ class PathHandler(object):
 
     def save_error(self):
         """Save the error in every point of the path."""
-        for p in self.points:
-            p.save_error()
+        for i, p in enumerate(self.points):
+            p.save_error(
+                left = self.left_error[i], right = self.right_error[i]
+            )
 
 
     def to_msg(self):
@@ -308,6 +332,109 @@ class PathHandler(object):
             traj.points[i].pose = self.points[i].to_pose_msg()
 
         return traj
+
+
+    def update_error_limit(self):
+        """Update the maximum allowed error based on the velocity and TPP."""
+        if self.trajectory is None:
+            raise ValueError(
+                "Unable to update error limits as Trajectory message was not"
+                "received yet."
+            )
+
+        error_limits = [0.0 for _ in range(len(self.points))]
+        left_error = [MAX_ERROR for _ in range(len(self.points))]
+        right_error = [-MAX_ERROR for _ in range(len(self.points))]
+
+        # Compute array that contains indices of points shifted by P (from TPP)
+        time_array = numpy.asarray([
+            tp.time_from_start.to_sec() for tp in self.trajectory.points
+        ])
+
+        dt = numpy.diff(
+            time_array,
+            append = 2 * time_array[-1] - time_array[-2]
+        )
+
+        helper_array = numpy.empty(dt.shape, dtype = numpy.int)
+        _dt = 0.0
+        j = len(dt) - 1
+
+        for i in reversed(range(len(dt))):
+            while _dt < 0.7:
+                j = (j - 1) % len(dt)
+                _dt += dt[j]
+
+            helper_array[i] = j
+            _dt -= dt[(i - 1) % len(dt)]
+
+
+        # At this point, helper_array contains directly index j of the point
+        # that has point i as a lookahead point.
+        for i2, i1 in enumerate(helper_array):
+            p1 = self.points[i1]
+            p2 = self.points[i2]
+
+            distance = p1.distanceTo(p2)
+            yaw1, yaw2 = p1.yaw, p2.yaw
+            w1 = [numpy.cos(yaw1), numpy.sin(yaw1)]
+            w2 = [p2.x - p1.x, p2.y - p1.y]
+
+            alpha = numpy.arccos(
+                numpy.dot(w1, w2)
+                / (numpy.linalg.norm(w1) * numpy.linalg.norm(w2))
+            )
+
+            # Change the orientation of alpha
+            if (
+                numpy.arctan2(
+                    w1[0] * w2[1] - w1[1] * w2[0],
+                    w1[0] * w2[0] + w1[1] * w2[1]
+                ) < 0.0
+            ):
+                alpha *= -1
+
+            # Compute max error based on angle and constrain it
+            if yaw2 - yaw1 != 0.0:
+                max_error = (
+                    distance * numpy.cos(alpha) / numpy.sin(yaw2 - yaw1)
+                )
+            error_limits[i2] = min(max(max_error, -MAX_ERROR), MAX_ERROR)
+
+
+            # Compute the max error with respect to the turning circle
+            gamma = numpy.radians(90) - abs(yaw1 + alpha - yaw2)
+            inner = (
+                -2 * K_LIM * numpy.sin(gamma) * distance
+                + numpy.cos(abs(alpha) - gamma)
+            )
+
+            # If this is not met, the turning circle does not intersect
+            # with the error line; i.e. it does not apply.
+            if abs(inner) <= 1.0:
+                beta = (numpy.arccos(inner) - abs(alpha) - gamma) / 2.0
+
+                if alpha < 0:
+                    beta *= -1.0
+
+                Bdistance = numpy.sin(alpha + beta) / K_LIM
+                max_error = Bdistance * numpy.sin(beta) / numpy.sin(gamma)
+
+                if Bdistance < 0.0:
+                    max_error *= -1
+
+                error_limits[i2] = min(max(max_error, -MAX_ERROR), MAX_ERROR)
+
+
+            if error_limits[i2] >= 0.0:
+                left_error[i2] = max_error
+
+            if error_limits[i2] <= 0.0:
+                right_error[i2] = max_error
+
+
+        self.left_error = left_error
+        self.right_error = right_error
 
 
 ######################
@@ -420,7 +547,9 @@ class RunNode(Node):
         errs_from_total = [0.0 for i in range(len(error))]
 
         for index, (total_error, last_error) in enumerate(zip(error, lverror)):
-            if abs(total_error) >= MAX_ERROR:
+            if not (
+                self.left_error[index] > total_error > self.right_error[index]
+            ):
                 errs.append(-0.02)
 
                 for i in self.original_path.arange(index - 20, index):
