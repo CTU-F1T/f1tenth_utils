@@ -548,7 +548,7 @@ class RunNode(Node):
 
         for index, (total_error, last_error) in enumerate(zip(error, lverror)):
             if not (
-                self.left_error[index] > total_error > self.right_error[index]
+                self.original_path.left_error[index] > total_error > self.original_path.right_error[index]
             ):
                 errs.append(-0.02)
 
