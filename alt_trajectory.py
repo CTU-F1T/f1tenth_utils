@@ -190,8 +190,8 @@ class PathHandler(object):
         self.last_error = None
         self.last_index = None
         self.error_limits = [0.0 for _ in range(len(points))]
-        self.left_error = numpy.ones(self.error_limits.shape) * MAX_ERROR
-        self.right_error = numpy.ones(self.error_limits.shape) * -MAX_ERROR
+        self.left_error = numpy.ones(len(points)) * MAX_ERROR
+        self.right_error = numpy.ones(len(points)) * -MAX_ERROR
 
 
     @classmethod
@@ -359,8 +359,8 @@ class PathHandler(object):
             )
 
         error_limits = [0.0 for _ in range(len(self.points))]
-        left_error = numpy.ones(error_limits.shape) * MAX_ERROR
-        right_error = numpy.ones(error_limits.shape) * -MAX_ERROR
+        left_error = numpy.ones(len(self.points)) * MAX_ERROR
+        right_error = numpy.ones(len(self.points)) * -MAX_ERROR
 
         # Compute array that contains indices of points shifted by P (from TPP)
         time_array = numpy.asarray([
