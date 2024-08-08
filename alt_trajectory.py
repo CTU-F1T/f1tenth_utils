@@ -599,7 +599,7 @@ class RunNode(Node):
 
         self.original_path.set_error(
             numpy.clip(
-                uniform_filter1d(self.original_path.error, 10),
+                uniform_filter1d(self.original_path.error, 10, mode = "wrap"),
                 self.original_path.right_error,
                 self.original_path.left_error
             )
