@@ -24,6 +24,8 @@ from tf.transformations import (
 
 from functools import partial
 
+from scipy.ndimage import uniform_filter1d
+
 
 # ROS messages
 from geometry_msgs.msg import PoseStamped, Pose
@@ -142,6 +144,14 @@ class PathHandler(object):
                 max(right, self.error + self.last_error), left
             )
             self.last_error = 0.0
+
+            self.x = self.orig_x + math.cos(self.yaw_normal) * self.error
+            self.y = self.orig_y + math.sin(self.yaw_normal) * self.error
+
+
+        def set_error(self, error):
+            """Set the error value and recompute the point location."""
+            self.error = error
 
             self.x = self.orig_x + math.cos(self.yaw_normal) * self.error
             self.y = self.orig_y + math.sin(self.yaw_normal) * self.error
@@ -306,6 +316,12 @@ class PathHandler(object):
             p.save_error(
                 left = self.left_error[i], right = self.right_error[i]
             )
+
+
+    def set_error(self, errors):
+        """Set the error values and recompute the points location."""
+        for p, error in zip(self.points, errors):
+            p.set_error(error)
 
 
     def to_msg(self):
@@ -573,6 +589,21 @@ class RunNode(Node):
             String(",".join(["%f" % value for value in lverror])),
             String(",".join(["%f" % value for value in error]))
         ]
+
+
+    @Timer(15)
+    def smoothen_error(self, *args, **kwargs):
+        """Smoothen the total error using average filter."""
+        if self.original_path is None:
+            return
+
+        self.original_path.set_error(
+            numpy.clip(
+                uniform_filter1d(self.original_path.error, 10),
+                self.original_path.right_error,
+                self.original_path.left_error
+            )
+        )
 
 
 ######################
