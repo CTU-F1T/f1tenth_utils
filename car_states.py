@@ -18,7 +18,7 @@ import argparse
 # ROS Messages
 from nav_msgs.msg import Odometry
 from vesc_msgs.msg import VescStateStamped
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, String
 from geometry_msgs.msg import PointStamped
 if ROS_VERSION == 1:
     from teensy.msg import drive_values
@@ -98,9 +98,10 @@ class StateNode(Node):
         self.v = 0
         self.dv = 0
         self.delta = 0
+        self.d_lat_orig = 0
         self.voltage = 0
 
-        self.STATES = 8
+        self.STATES = 9
 
 
         self.last_pwm_high = 0
@@ -123,12 +124,16 @@ class StateNode(Node):
         self.sub_curp = self.Subscriber("/trajectory/current_point",
                                         PointStamped, self.callback_curp,
                                         queue_size = 1, tcp_nodelay = True)
+        self.sub_dlat_orig = self.Subscriber(
+            "/trajectory/difference/index_lateral_first",
+            String, self.callback_dlat_orig,
+            queue_size = 1, tcp_nodelay = True)
 
         if not p_output:
             sys.stdout.write("\n" * self.STATES)
             self.print_data = self.Timer(0.02, self.callback_timer)
         else:
-            print("x_m,y_m,d_m,theta_rad,v_mps,dv_mps,delta_rad,voltage_v")
+            print("x_m,y_m,d_m,d_lat_m,theta_rad,v_mps,dv_mps,delta_rad,voltage_v")
             self.print_data = self.Timer(0.02, self.callback_timer_p)
 
         self.timestamp = self.get_time()
@@ -185,6 +190,11 @@ class StateNode(Node):
         self.d = math.sqrt((self.plan_x - self.x)**2 + (self.plan_y - self.y)**2)
 
 
+    def callback_dlat_orig(self, data):
+        """Obtain lateral error from the original (first) plan."""
+        self.d_lat_orig = float(data.data.split(",")[1])
+
+
     def obtain_delta(self, pwm):
         """Common function for obtaining steering angle.
 
@@ -205,6 +215,7 @@ class StateNode(Node):
         print("x:\t%s" % str(self.x))
         print("y:\t%s" % str(self.y))
         print("d:\t%+.6f m" % self.d)
+        print("d_orig:\t%+.6f m" % self.d_lat_orig)
         print("theta:\t%+.6f    \t(%+.2f deg)" % (self.theta, math.degrees(self.theta)))
         print("v:\t%+.6f m/s\t(%+.2f km/h)" % (self.v, self.v * 3.6))
         print("dv:\t%+.6f m/s\t(%+.2f km/h)" % (self.v - self.plan_v, (self.v - self.plan_v) * 3.6))
@@ -218,6 +229,7 @@ class StateNode(Node):
             "%s" % str(self.x),
             "%s" % str(self.y),
             "%.6f" % self.d,
+            "%.6f" % self.d_lat_orig,
             "%.6f" % self.theta,
             "%.6f" % self.v,
             "%.6f" % (self.v - self.plan_v),
