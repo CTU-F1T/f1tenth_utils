@@ -145,7 +145,7 @@ class StateNode(Node):
             except IOError:
                 self.loginfo("Creating file 'states.log'")
                 with open("states.log", "w") as f:
-                    f.write("t_s,x_m,y_m,v_mps\n")
+                    f.write("t_s,x_m,y_m,d_lat_m,theta_rad,v_mps,delta_rad\n")
 
             self.log_data = self.Timer(0.1, self.callback_log_data)
 
@@ -242,9 +242,9 @@ class StateNode(Node):
         """Log data."""
         with open("states.log", "a+") as f:
             f.write(
-                "%f,%f,%f,%f\n"
+                "%f,%f,%f,%f,%f,%f,%f\n"
                 % (
-                    (self.get_time() - self.timestamp), self.x, self.y, self.v
+                    (self.get_time() - self.timestamp), self.x, self.y, self.d_lat_orig, self.theta, self.v, self.delta
                 )
             )
 
