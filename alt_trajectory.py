@@ -529,7 +529,8 @@ class RunNode(Node):
         return m
 
 
-    @Timer(2)  # 20
+    # @Timer(2)  # 20
+    @Subscriber("/lap_time", Time)
     @Publisher("/trajectory", Trajectory, latch = True)
     def pub_trajectory(self, *args, **kwargs):
         """Publish the edited path.
@@ -544,7 +545,7 @@ class RunNode(Node):
             return m
 
 
-    @Timer(10)  # 70
+    # @Timer(10)  # 70
     @Publisher("/friction_vector/change_diff", String)
     @Publisher("/trajectory/tracking_error", String)
     @Publisher("/trajectory/tracking_error_total", String)
@@ -591,7 +592,7 @@ class RunNode(Node):
         ]
 
 
-    @Timer(15)
+    # @Timer(15)
     def smoothen_error(self, *args, **kwargs):
         """Smoothen the total error using average filter."""
         if self.original_path is None:
