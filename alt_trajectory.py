@@ -411,7 +411,7 @@ class PathHandler(object):
                 alpha *= -1
 
             # Compute max error based on angle and constrain it
-            if yaw2 - yaw1 != 0.0:
+            if numpy.isclose(numpy.sin(yaw2 - yaw1), 0.0):
                 max_error = (
                     distance * numpy.cos(alpha) / numpy.sin(yaw2 - yaw1)
                 )
