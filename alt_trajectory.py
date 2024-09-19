@@ -29,7 +29,7 @@ from scipy.ndimage import uniform_filter1d
 
 # ROS messages
 from geometry_msgs.msg import PoseStamped, Pose
-from std_msgs.msg import String
+from std_msgs.msg import String, Time
 from nav_msgs.msg import Path
 from autoware_auto_msgs.msg import Trajectory
 
