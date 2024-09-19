@@ -443,10 +443,10 @@ class PathHandler(object):
 
 
             if error_limits[i2] >= 0.0:
-                left_error[i2] = max_error
+                left_error[i2] = error_limits[i2]
 
             if error_limits[i2] <= 0.0:
-                right_error[i2] = max_error
+                right_error[i2] = error_limits[i2]
 
 
         self.left_error = left_error
