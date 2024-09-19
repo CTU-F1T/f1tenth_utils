@@ -415,7 +415,7 @@ class PathHandler(object):
                 max_error = (
                     distance * numpy.cos(alpha) / numpy.sin(yaw2 - yaw1)
                 )
-            error_limits[i2] = min(max(max_error, -MAX_ERROR), MAX_ERROR)
+                error_limits[i2] = min(max(max_error, -MAX_ERROR), MAX_ERROR)
 
 
             # Compute the max error with respect to the turning circle
