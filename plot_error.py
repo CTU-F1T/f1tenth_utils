@@ -141,7 +141,7 @@ class Updater(Thread):
         self.n = Node("plot_error")
 
         self.n.Subscriber(
-            "/trajectory/difference/index_lateral",
+            "/trajectory/difference/index_lateral_first",
             String, update_data, queue_size = 1
         )
 
