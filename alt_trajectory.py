@@ -547,12 +547,12 @@ class RunNode(Node):
             error = self.original_path.error
             lverror = self.original_path.last_valid_error
             self.saving = False
-            return (
+            return [
                 m,
                 Float32(numpy.square(error).mean()),
                 String(",".join(["%f" % value for value in lverror])),
                 String(",".join(["%f" % value for value in error]))
-            )
+            ]
 
 
     # @Timer(10)  # 70
