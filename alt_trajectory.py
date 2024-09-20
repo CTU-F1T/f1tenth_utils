@@ -29,7 +29,7 @@ from scipy.ndimage import uniform_filter1d
 
 # ROS messages
 from geometry_msgs.msg import PoseStamped, Pose
-from std_msgs.msg import String, Time
+from std_msgs.msg import String, Time, Float32
 from nav_msgs.msg import Path
 from autoware_auto_msgs.msg import Trajectory
 
@@ -532,6 +532,9 @@ class RunNode(Node):
     # @Timer(2)  # 20
     @Subscriber("/lap_time", Time)
     @Publisher("/trajectory", Trajectory, latch = True)
+    @Publisher("/lap/mse", Float32)
+    @Publisher("/lap/tracking_error", String)
+    @Publisher("/lap/tracking_error_total", String)
     def pub_trajectory(self, *args, **kwargs):
         """Publish the edited path.
 
@@ -541,8 +544,15 @@ class RunNode(Node):
             self.saving = True
             self.original_path.save_error()
             m = self.original_path.to_trajectory_msg()
+            error = self.original_path.error
+            lverror = self.original_path.last_valid_error
             self.saving = False
-            return m
+            return (
+                m,
+                Float32(numpy.square(error).mean()),
+                String(",".join(["%f" % value for value in lverror])),
+                String(",".join(["%f" % value for value in error]))
+            )
 
 
     # @Timer(10)  # 70
