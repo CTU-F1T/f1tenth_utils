@@ -549,7 +549,7 @@ class RunNode(Node):
             self.saving = False
             return [
                 m,
-                Float32(numpy.square(error).mean()),
+                Float32(numpy.square(lverror).mean()),
                 String(",".join(["%f" % value for value in lverror])),
                 String(",".join(["%f" % value for value in error]))
             ]
